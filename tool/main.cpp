@@ -1,23 +1,22 @@
 #include "construction.h"
+
 #include <fstream>
 #include <iostream>
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 #include <string>
 #include <time.h>
 
-using namespace std;
-
 int main()
 {
-  ifstream                 fichier("../sample/example_exe", ios::in);
-  ifstream                 fichierH("../sample/example", ios::in);
+  std::ifstream            fichier("../sample/example_exe", std::ios::in);
+  std::ifstream            fichierH("../sample/example", std::ios::in);
   std::vector<std::string> instruction;
   std::string              hamming;
 
   if (fichier && fichierH) {
     getline(fichierH, hamming);
-    for (int i = 0; i < 30; i++) {
-      string      contenu;
+    for (std::size_t i = 0; i < 30; i++) {
+      std::string contenu;
       std::string token;
       getline(fichier, contenu);
       if (contenu[50] == ' ') {
@@ -31,21 +30,21 @@ int main()
     }
     fichier.close();
   } else {
-    cerr << "Error to open the input file!" << endl;
+    std::cerr << "Error to open the input file!" << std::endl;
   }
   std::map<std::string, std::vector<std::vector<std::vector<float>>>> proba;
-  std::map<std::string, std::vector<int>>                             link;
-  std::vector<int>                                                    var;
-  std::map<std::string, int>                                          fonction;
-  std::map<std::string, std::vector<int>>                             paintext;
+  std::map<std::string, std::vector<std::size_t>>                     link;
+  std::vector<std::size_t>                                            var;
+  std::map<std::string, std::size_t>                                  fonction;
+  std::map<std::string, std::vector<std::size_t>>                     paintext;
 
-  std::vector<int> textOne(4);
+  std::vector<std::size_t> textOne(4);
   textOne[0] = 10;
   textOne[1] = 50;
   textOne[2] = 16;
   textOne[3] = 50;
 
-  std::vector<int> textTwo(4);
+  std::vector<std::size_t> textTwo(4);
   textTwo[0] = 13;
   textTwo[1] = 67;
   textTwo[2] = 17;
@@ -54,12 +53,12 @@ int main()
   paintext["R18"] = textOne;
   paintext["R19"] = textTwo;
 
-  std::map<int, int> ciphertext;
+  std::map<std::size_t, std::size_t> ciphertext;
   ciphertext[28] = 62;
   ciphertext[29] = 233;
 
-  std::map<int, std::vector<int>> box;
-  std::vector<int>                sbox = {
+  std::map<std::size_t, std::vector<std::size_t>> box;
+  std::vector<std::size_t>                        sbox = {
       99,  124, 119, 123, 242, 107, 111, 197, 48,  1,   103, 43,  254, 215, 171, 118, 202, 130, 201, 125, 250, 89,
       71,  240, 173, 212, 162, 175, 156, 164, 114, 192, 183, 253, 147, 38,  54,  63,  247, 204, 52,  165, 229, 241,
       113, 216, 49,  21,  4,   199, 35,  195, 24,  150, 5,   154, 7,   18,  128, 226, 235, 39,  178, 117, 9,   131,
@@ -92,17 +91,17 @@ int main()
   beliefPropagation(gm, output, 0, true);
 
   stopTime    = clock();
-  elapsedTime = (stopTime - startTime) / (CLOCKS_PER_SEC / (double)1000.0);
+  elapsedTime = (stopTime - startTime) / (CLOCKS_PER_SEC / 1000.0);
   std::cout << "Time :" << elapsedTime << std::endl;
-  ofstream fichierOut("../output", ios::out);
+  std::ofstream fichierOut("../output", std::ios::out);
 
   if (fichierOut) {
-    for (int i = 0; i < output.size(); i++) {
+    for (std::size_t i = 0; i < output.size(); i++) {
       fichierOut << output[i] << std::endl;
     }
     fichier.close();
   } else {
-    cerr << "Error in output file!" << endl;
+    std::cerr << "Error in output file!" << std::endl;
   }
 
   return 0;

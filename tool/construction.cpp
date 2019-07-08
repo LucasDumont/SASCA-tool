@@ -1,24 +1,25 @@
 #include "construction.h"
+
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 #include <opengm/inference/icm.hxx>
 
-Model modelCreation(std::map<std::string, int>                                           fonctions,
+Model modelCreation(std::map<std::string, std::size_t>                                   fonctions,
                     std::map<std::string, std::vector<std::vector<std::vector<float>>>>& probaTab,
-                    std::map<std::string, std::vector<int>>                                       link,
-                    std::vector<int>                                                              var)
+                    std::map<std::string, std::vector<std::size_t>>                      link,
+                    std::vector<std::size_t>                                             var)
 {
   opengm::DiscreteSpace<> space;
-  for (int i = 0; i < var.size(); i++) {
+  for (std::size_t i = 0; i < var.size(); i++) {
     space.addVariable(var[i]);
     // std::cout <<" var "<< var[1]<<" ou var"<< var[0]<<std::endl;
   }
   Model gm(space);
-  for (std::map<std::string, int>::iterator ii = fonctions.begin(); ii != fonctions.end(); ++ii) {
+  for (std::map<std::string, std::size_t>::iterator ii = fonctions.begin(); ii != fonctions.end(); ++ii) {
     if ((*ii).second == 1) {
       bool               recherche = false;
-      int                variable  = 0;
+      std::size_t        variable  = 0;
       std::vector<float> prob;
-      for (std::map<std::string, std::vector<int>>::iterator it = link.begin(); it != link.end() || !recherche; it++) {
+      for (auto it = link.begin(); it != link.end() || !recherche; it++) {
         if ((*it).first == (*ii).first) {
           recherche = true;
           variable  = (*it).second[0];
@@ -38,14 +39,14 @@ Model modelCreation(std::map<std::string, int>                                  
       fonctionPremier(&gm, prob, variable);
     } else if ((*ii).second == 2) {
       bool                            recherche   = false;
-      int                             variable[2] = {0, 0};
-      int                             cpt         = 0;
+      std::size_t                     variable[2] = {0, 0};
+      std::size_t                     cpt         = 0;
       std::vector<std::vector<float>> prob;
 
-      for (std::map<std::string, std::vector<int>>::iterator it = link.begin(); it != link.end() || !recherche; it++) {
-        if ((*it).first == (*ii).first) {
-          variable[0] = (*it).second[0];
-          variable[1] = (*it).second[1];
+      for (auto it = link.begin(); it != link.end() || !recherche; it++) {
+        if (it->first == ii->first) {
+          variable[0] = it->second[0];
+          variable[1] = it->second[1];
           cpt++;
           recherche = true;
         }
@@ -54,26 +55,26 @@ Model modelCreation(std::map<std::string, int>                                  
       for (std::map<std::string, std::vector<std::vector<std::vector<float>>>>::iterator it = probaTab.begin();
            it != probaTab.end() || !recherche;
            it++) {
-        if ((*it).first == (*ii).first) {
+        if (it->first == ii->first) {
           recherche = true;
           prob      = (*it).second[0];
           probaTab.erase(it);
         }
       }
-      int variableF[2];
+      std::size_t variableF[2];
       variableF[0] = variable[0];
       variableF[1] = variable[1];
       fonctionSecond(&gm, prob, variableF);
     } else if ((*ii).second == 3) {
       bool                                         recherche   = false;
-      int                                          variable[3] = {0, 0, 0};
-      int                                          cpt         = 0;
+      std::size_t                                  variable[3] = {0, 0, 0};
+      std::size_t                                  cpt         = 0;
       std::vector<std::vector<std::vector<float>>> prob;
-      for (std::map<std::string, std::vector<int>>::iterator it = link.begin(); it != link.end() || !recherche; it++) {
-        if ((*it).first == (*ii).first) {
-          variable[0] = (*it).second[0];
-          variable[1] = (*it).second[1];
-          variable[2] = (*it).second[2];
+      for (auto it = link.begin(); it != link.end() || !recherche; it++) {
+        if (it->first == ii->first) {
+          variable[0] = it->second[0];
+          variable[1] = it->second[1];
+          variable[2] = it->second[2];
           cpt++;
           recherche = true;
         }
@@ -103,7 +104,7 @@ Model modelCreation(std::map<std::string, int>                                  
   return gm;
 }
 
-void fonctionPremier(Model* gm, std::vector<float> prob, int var)
+void fonctionPremier(Model* gm, std::vector<float> prob, std::size_t var)
 {
   typedef opengm::ExplicitFunction<float> ExplicitFunction;
   typedef Model::FunctionIdentifier       FunctionIdentifier;
@@ -121,14 +122,14 @@ void fonctionPremier(Model* gm, std::vector<float> prob, int var)
   gm->addFactor(id, variableIndex, variableIndex + 1);
 }
 
-void fonctionSecond(Model* gm, std::vector<std::vector<float>> prob, int var[])
+void fonctionSecond(Model* gm, std::vector<std::vector<float>> prob, std::size_t var[])
 { // a verif
   typedef opengm::ExplicitFunction<float> ExplicitFunction;
   typedef Model::FunctionIdentifier       FunctionIdentifier;
   const size_t                            shape[] = {gm->numberOfLabels(var[0]), gm->numberOfLabels(var[1])};
 
-  size_t variableIndex[2];
-  int    position[2];
+  std::size_t variableIndex[2];
+  std::size_t position[2];
   // add factorp
   if (var[0] < var[1]) {
     variableIndex[0] = var[0];
@@ -146,7 +147,7 @@ void fonctionSecond(Model* gm, std::vector<std::vector<float>> prob, int var[])
   size_t*          probaPos[2] = {&state, &stateD};
   for (state = 0; state < prob.size(); state++) {
     for (stateD = 0; stateD < prob[state].size(); stateD++) {
-      if (prob[*probaPos[position[0]]][*probaPos[position[1]]])
+      if (prob[*probaPos[position[0]]][*probaPos[position[1]]] != 0.f)
         f(state, stateD) = prob[*probaPos[position[0]]][*probaPos[position[1]]];
     }
   }
@@ -155,7 +156,7 @@ void fonctionSecond(Model* gm, std::vector<std::vector<float>> prob, int var[])
   gm->addFactor(id, variableIndex, variableIndex + 2);
 }
 
-void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> prob, int var[])
+void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> prob, std::size_t var[])
 {
   typedef opengm::ExplicitFunction<float> ExplicitFunction;
   typedef Model::FunctionIdentifier       FunctionIdentifier;
@@ -164,8 +165,8 @@ void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> p
 
   // sequences of variable indices need to be (and in this case are) sorted
 
-  size_t variableIndexSequence[3];
-  int    position[3];
+  size_t      variableIndexSequence[3];
+  std::size_t position[3];
 
   variableIndexSequence[0] = var[0];
   variableIndexSequence[1] = var[1];
@@ -175,22 +176,22 @@ void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> p
   position[2]              = 2;
 
   if (!(var[0] < var[1] && var[1] < var[2])) {
-    for (int tmp = 0; tmp < 2; tmp++) {
-      for (int a = 0; a < 2; a++) {
+    for (std::size_t tmp = 0; tmp < 2; tmp++) {
+      for (std::size_t a = 0; a < 2; a++) {
         if (variableIndexSequence[a] > variableIndexSequence[a + 1]) {
-          int b                        = variableIndexSequence[a];
+          std::size_t b                = variableIndexSequence[a];
           variableIndexSequence[a]     = variableIndexSequence[a + 1];
           variableIndexSequence[a + 1] = b;
-          int tmpPosition              = position[a];
+          std::size_t tmpPosition      = position[a];
           position[a]                  = position[a + 1];
           position[a + 1]              = tmpPosition;
         }
       }
     }
   }
-  int              indice1 = gm->numberOfLabels(variableIndexSequence[0]);
-  int              indice2 = gm->numberOfLabels(variableIndexSequence[0]);
-  int              indice3 = gm->numberOfLabels(variableIndexSequence[0]);
+  std::size_t      indice1 = gm->numberOfLabels(variableIndexSequence[0]);
+  std::size_t      indice2 = gm->numberOfLabels(variableIndexSequence[0]);
+  std::size_t      indice3 = gm->numberOfLabels(variableIndexSequence[0]);
   ExplicitFunction f(shape, shape + 3, 0);
   size_t           state1, state2, state3;
   size_t*          proba1[3];
@@ -201,7 +202,7 @@ void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> p
   for (state1 = 0; state1 < indice1; ++state1) {
     for (state2 = 0; state2 < indice2; ++state2) {
       for (state3 = 0; state3 < indice3; ++state3) {
-        if (prob[*proba1[position[0]]][*proba1[position[1]]][*proba1[position[2]]] > 0.0) {
+        if (prob[*proba1[position[0]]][*proba1[position[1]]][*proba1[position[2]]] > 0.f) {
           f(state1, state2, state3) = prob[*proba1[position[0]]][*proba1[position[1]]][*proba1[position[2]]];
         }
       }
@@ -212,13 +213,12 @@ void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> p
   gm->addFactor(id, variableIndexSequence, variableIndexSequence + 3);
 }
 
-void beliefPropagation(Model gm, std::vector<std::string>& output, int iteration, bool allVariables)
+void beliefPropagation(Model gm, std::vector<std::string>& output, std::size_t iteration, bool allVariables)
 {
   typedef opengm::BeliefPropagationUpdateRules<Model, opengm::Maximizer>                     UpdateRules;
   typedef opengm::MessagePassing<Model, opengm::Maximizer, UpdateRules, opengm::MaxDistance> BeliefPropagation;
-  typedef Model::IndependentFactorType                                                       IndependentFactor;
   const size_t                 maxNumberOfIterations = iteration;
-  const double                 convergenceBound      = 1e-7;
+  const float                  convergenceBound      = 1e-7f;
   const double                 damping               = 0.0;
   BeliefPropagation::Parameter parameter(maxNumberOfIterations, convergenceBound, damping);
   BeliefPropagation            bp(gm, parameter);
@@ -244,12 +244,10 @@ void beliefPropagation(Model gm, std::vector<std::string>& output, int iteration
     std::string tempo  = "x" + trans.str();
     std::string tempo2 = "=" + trans2.str();
 
-    float cpt = 0;
     output.push_back(tempo + tempo2);
-    float borne = 0;
 
-    for (int j = 0; j < gm.numberOfLabels(variable); j++) {
-      if (IF(j) == 0 || allVariables) {
+    for (std::size_t j = 0; j < gm.numberOfLabels(variable); j++) {
+      if (IF(j) == 0.f || allVariables) {
         std::cout << "state: " << j << " probability value: " << IF(j) << " ; ";
         std::ostringstream buff1;
         buff1 << j;
@@ -266,55 +264,55 @@ void beliefPropagation(Model gm, std::vector<std::string>& output, int iteration
   }
 }
 
-std::map<std::string, int>
+std::map<std::string, std::size_t>
 transformationASM(std::vector<std::string>                                             contenue,
                   std::map<std::string, std::vector<std::vector<std::vector<float>>>>& probaTab,
-                  std::map<std::string, std::vector<int>>&                             link,
-                  std::vector<int>&                                                    var,
-                  std::map<std::string, int>&                                          fonctions,
+                  std::map<std::string, std::vector<std::size_t>>&                     link,
+                  std::vector<std::size_t>&                                            var,
+                  std::map<std::string, std::size_t>&                                  fonctions,
                   std::string                                                          hammingweight,
-                  std::map<std::string, std::vector<int>>                              valeurFixer,
-                  std::map<int, int>                                                   valeurResultat,
-                  std::map<int, std::vector<int>>                                      box,
+                  std::map<std::string, std::vector<std::size_t>>                      valeurFixer,
+                  std::map<std::size_t, std::size_t>                                   valeurResultat,
+                  std::map<std::size_t, std::vector<std::size_t>>                      box,
                   bool                                                                 graph,
                   bool                                                                 cycle)
 {
-  std::map<std::string, int>              instruction;
-  std::map<std::string, int>              traitement;
-  std::map<std::string, std::vector<int>> RegY;
-  std::map<std::string, std::vector<int>> RegX;
-  std::map<std::string, std::vector<int>> RegZ;
-  int                                     cursorRegX   = 0;
-  int                                     cursorRegY   = 0;
-  int                                     cursorRegZ   = 0;
-  int                                     cursorLDRegX = 0;
-  int                                     cursorLDRegY = 0;
-  int                                     cursorLDRegZ = 0;
-  std::vector<int>                        stockR30;
-  std::vector<int>                        stockR28;
-  std::vector<int>                        stockR26;
-  std::vector<int>                        stockLPMR30;
-  std::vector<int>                        stockLPMR28;
-  std::vector<int>                        stockLPMR26;
-  std::string                             nameRegX = "";
-  std::string                             nameRegY = "";
-  std::string                             nameRegZ = "";
+  std::map<std::string, std::size_t>              instruction;
+  std::map<std::string, std::size_t>              traitement;
+  std::map<std::string, std::vector<std::size_t>> RegY;
+  std::map<std::string, std::vector<std::size_t>> RegX;
+  std::map<std::string, std::vector<std::size_t>> RegZ;
+  std::size_t                                     cursorRegX   = 0;
+  std::size_t                                     cursorRegY   = 0;
+  std::size_t                                     cursorRegZ   = 0;
+  std::size_t                                     cursorLDRegX = 0;
+  std::size_t                                     cursorLDRegY = 0;
+  std::size_t                                     cursorLDRegZ = 0;
+  std::vector<std::size_t>                        stockR30;
+  std::vector<std::size_t>                        stockR28;
+  std::vector<std::size_t>                        stockR26;
+  std::vector<std::size_t>                        stockLPMR30;
+  std::vector<std::size_t>                        stockLPMR28;
+  std::vector<std::size_t>                        stockLPMR26;
+  std::string                                     nameRegX;
+  std::string                                     nameRegY;
+  std::string                                     nameRegZ;
 
   instructionTaken(instruction, traitement);
 
-  int nbLabel;
+  std::size_t nbLabel;
   if (graph) {
     nbLabel = 1;
   } else {
     nbLabel = 256;
   }
 
-  std::map<std::string, int>              varIndex;
-  std::map<int, std::vector<std::string>> varFonc;
+  std::map<std::string, std::size_t>              varIndex;
+  std::map<std::size_t, std::vector<std::string>> varFonc;
 
-  for (int i = 0; i < contenue.size(); i++) {
+  for (std::size_t i = 0; i < contenue.size(); i++) {
     bool        LPMReg   = false;
-    int         idLPMReg = 0;
+    std::size_t idLPMReg = 0;
     std::string key      = contenue[i].substr(0, contenue[i].find(" "));
 
     if (instruction.find(key) != instruction.end()) {
@@ -322,10 +320,10 @@ transformationASM(std::vector<std::string>                                      
       std::string tmpConca    = boost::lexical_cast<std::string>(i);
 
       nomFonction = nomFonction + tmpConca;
-      std::vector<int> lienF;
-      std::string      ligneEnCours;
-      ligneEnCours  = contenue[i].substr(contenue[i].find(" ") + 1);
-      int ValeurKey = instruction[key];
+      std::vector<std::size_t> lienF;
+      std::string              ligneEnCours;
+      ligneEnCours          = contenue[i].substr(contenue[i].find(" ") + 1);
+      std::size_t ValeurKey = instruction[key];
 
       if (instruction[key] > 3) {
         hammingInstructionIteration(key, ValeurKey, hammingweight, contenue, i, instruction);
@@ -340,15 +338,15 @@ transformationASM(std::vector<std::string>                                      
       bool valueX= false;
       bool valueY= false;*/
 
-      for (int j = 0; j < ValeurKey; j++) {
+      for (std::size_t j = 0; j < ValeurKey; j++) {
         std::string nomVar;
         std::string nomVarMov;
 
         std::vector<float> variableProb(nbLabel);
         if (key == "MOV") {
-          nomVarMov = ligneEnCours.substr(0, ligneEnCours.find(","));
-          int posi  = ligneEnCours.find(",") + 2;
-          nomVar    = ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.substr(0, posi).find(" "));
+          nomVarMov        = ligneEnCours.substr(0, ligneEnCours.find(","));
+          std::size_t posi = ligneEnCours.find(",") + 2;
+          nomVar           = ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.substr(0, posi).find(" "));
           if (nomVar[nomVar.size() - 1] == ' ') {
             nomVar = nomVar.substr(0, nomVar.size() - 1);
           }
@@ -358,8 +356,8 @@ transformationASM(std::vector<std::string>                                      
         } else if (j == 0) {
           nomVar = ligneEnCours.substr(0, ligneEnCours.find(","));
         } else if (j == 1) {
-          int posi = ligneEnCours.find(",") + 2;
-          nomVar   = ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.substr(0, posi).find(" "));
+          std::size_t posi = ligneEnCours.find(",") + 2;
+          nomVar           = ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.substr(0, posi).find(" "));
           if (nomVar[nomVar.size() - 1] == ' ') {
             nomVar = nomVar.substr(0, nomVar.size() - 1);
           }
@@ -416,9 +414,9 @@ transformationASM(std::vector<std::string>                                      
 
         if (varIndex.find(nomVar) != varIndex.end() && (j < ValeurKey - 1 || key == "OUT" || key == "ST" ||
                                                         key == "STD" || key == "CPI" || key == "MOV" || key == "CPC")) {
-          int                        id = varIndex[nomVar];
-          std::map<std::string, int> vue;
-          bool                       me = false;
+          std::size_t                        id = varIndex[nomVar];
+          std::map<std::string, std::size_t> vue;
+          bool                               me = false;
 
           if (!cycle) {
             me = findCycle(varFonc, link, nomFonction, id, vue);
@@ -444,8 +442,9 @@ transformationASM(std::vector<std::string>                                      
               if (verif.find("Y") != std::string::npos) {
                 if (nameRegY != "") {
                   if (key == "STD") {
-                    int index = ligneEnCours.find("+");
-                    RegY[nameRegY][cursorLDRegY + std::atoi(ligneEnCours.substr(index + 1, index + 2).c_str())] = id;
+                    std::size_t index = ligneEnCours.find("+");
+                    RegY[nameRegY][cursorLDRegY +
+                                   std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, 10)] = id;
                   } else {
                     RegY[nameRegY].push_back(id);
                     cursorRegY++;
@@ -454,8 +453,9 @@ transformationASM(std::vector<std::string>                                      
               } else if (verif.find("X") != std::string::npos) {
                 if (nameRegX != "") {
                   if (key == "STD") {
-                    int index = ligneEnCours.find("+");
-                    RegX[nameRegX][cursorLDRegX + std::atoi(ligneEnCours.substr(index + 1, index + 2).c_str())] = id;
+                    std::size_t index = ligneEnCours.find("+");
+                    RegX[nameRegX][cursorLDRegX +
+                                   std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, 10)] = id;
                   } else {
                     RegX[nameRegX].push_back(id);
                     cursorRegX++;
@@ -464,8 +464,9 @@ transformationASM(std::vector<std::string>                                      
               } else if (verif.find("Z") != std::string::npos) {
                 if (nameRegZ != "") {
                   if (key == "STD") {
-                    int index = ligneEnCours.find("+");
-                    RegZ[nameRegZ][cursorLDRegZ + std::atoi(ligneEnCours.substr(index + 1, index + 2).c_str())] = id;
+                    std::size_t index = ligneEnCours.find("+");
+                    RegZ[nameRegZ][cursorLDRegZ +
+                                   std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, 10)] = id;
                   } else {
                     RegZ[nameRegZ].push_back(id);
                     cursorRegZ++;
@@ -475,16 +476,17 @@ transformationASM(std::vector<std::string>                                      
             }
           }
         } else {
-          bool me = true;
-          int  id = 0;
+          bool        me = true;
+          std::size_t id = 0;
           if (key == "LD" || key == "LDD") {
             std::string verif = ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.find(" "));
             if (verif.find("Y") != std::string::npos) {
               if (nameRegY != "") {
                 if (key == "LDD") {
-                  int index = ligneEnCours.find("+");
-                  int tmpid =
-                      RegY[nameRegY][cursorLDRegY + std::atoi(ligneEnCours.substr(index + 1, index + 2).c_str())];
+                  std::size_t index = ligneEnCours.find("+");
+                  std::size_t tmpid =
+                      RegY[nameRegY]
+                          [cursorLDRegY + std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, 10)];
                   id = tmpid;
                 } else {
                   id = RegY[nameRegY][cursorLDRegY];
@@ -498,9 +500,10 @@ transformationASM(std::vector<std::string>                                      
             } else if (verif.find("X") != std::string::npos) {
               if (nameRegX != "") {
                 if (key == "LDD") {
-                  int index = ligneEnCours.find("+");
-                  int tmpid =
-                      RegX[nameRegX][cursorLDRegX + std::atoi(ligneEnCours.substr(index + 1, index + 2).c_str())];
+                  std::size_t index = ligneEnCours.find("+");
+                  std::size_t tmpid =
+                      RegX[nameRegX]
+                          [cursorLDRegX + std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, 10)];
                   id = tmpid;
                 } else {
                   id = RegY[nameRegX][cursorLDRegX];
@@ -514,8 +517,9 @@ transformationASM(std::vector<std::string>                                      
             } else if (verif.find("Z") != std::string::npos) {
               if (nameRegZ != "") {
                 if (key == "LDD") {
-                  int index = ligneEnCours.find("+");
-                  id = RegZ[nameRegZ][cursorLDRegZ + std::atoi(ligneEnCours.substr(index + 1, index + 2).c_str())];
+                  std::size_t index = ligneEnCours.find("+");
+                  id                = RegZ[nameRegZ][cursorLDRegZ +
+                                      std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, 10)];
                 } else {
                   id = RegZ[nameRegZ][cursorLDRegZ];
                   if (verif.find("+") != std::string::npos) {
@@ -528,7 +532,7 @@ transformationASM(std::vector<std::string>                                      
             } else {
               std::cout << "erreur sur les registre Y X Z " << std::endl;
             }
-            std::map<std::string, int> vue;
+            std::map<std::string, std::size_t> vue;
             me = false;
             if (!cycle) {
               me = findCycle(varFonc, link, nomFonction, id, vue);
@@ -552,7 +556,8 @@ transformationASM(std::vector<std::string>                                      
             vec.push_back(nomFonction);
             varFonc[var.size() - 1] = vec;
             if (key == "SBIW") {
-              int diff = std::atoi(ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.find(" ")).c_str());
+              std::size_t diff = std::strtoul(
+                  ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.find(" ")).c_str(), nullptr, 10);
 
               if (nomVar == "R28") {
                 cursorRegY -= diff;
@@ -560,7 +565,8 @@ transformationASM(std::vector<std::string>                                      
                 cursorRegZ = -diff;
               }
             } else if (key == "ADIW") {
-              int add = std::atoi(ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.find(" ")).c_str());
+              std::size_t add = std::strtoul(
+                  ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.find(" ")).c_str(), nullptr, 10);
 
               if (nomVar == "R28") {
                 cursorRegY += add;
@@ -573,7 +579,7 @@ transformationASM(std::vector<std::string>                                      
               if (nomVar == "R26") {
                 if (RegX.find(ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.find(" "))) == RegX.end()) {
 
-                  RegX[nameRegX] = std::vector<int>(0);
+                  RegX[nameRegX] = std::vector<std::size_t>(0);
                 }
                 nameRegX   = ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.find(" "));
                 cursorRegX = 0;
@@ -581,11 +587,11 @@ transformationASM(std::vector<std::string>                                      
                 if (RegY.find(ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.find(" "))) == RegY.end()) {
                   nameRegY       = ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.find(" "));
                   cursorRegY     = 0;
-                  RegY[nameRegY] = std::vector<int>(0);
+                  RegY[nameRegY] = std::vector<std::size_t>(0);
                 }
               } else if (nomVar == "R30") {
                 if (RegZ.find(ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.find(" "))) == RegZ.end()) {
-                  RegZ[nameRegZ] = std::vector<int>(0);
+                  RegZ[nameRegZ] = std::vector<std::size_t>(0);
                 }
                 nameRegZ   = ligneEnCours.substr(ligneEnCours.find(",") + 2, ligneEnCours.find(" "));
                 cursorRegZ = 0;
@@ -594,14 +600,14 @@ transformationASM(std::vector<std::string>                                      
           }
         }
 
-        std::string poid       = hammingweight.substr(0, hammingweight.find(","));
-        hammingweight          = hammingweight.substr(hammingweight.find(",") + 1);
-        int              value = std::atoi(poid.c_str());
-        std::vector<int> valueH;
-        bool             findValuer = false;
+        std::string poid                    = hammingweight.substr(0, hammingweight.find(","));
+        hammingweight                       = hammingweight.substr(hammingweight.find(",") + 1);
+        std::size_t              value      = std::strtoul(poid.c_str(), nullptr, 10);
+        bool                     findValuer = false;
+        std::vector<std::size_t> valueH;
 
         if (valeurFixer.find(nomVar) != valeurFixer.end() && (j < ValeurKey - 1 || key == "LPM")) {
-          for (int f = 0; f < valeurFixer[nomVar].size() - 1 && !findValuer; f = f + 2) {
+          for (std::size_t f = 0; f < valeurFixer[nomVar].size() - 1 && !findValuer; f = f + 2) {
             if (valeurFixer[nomVar][f] == i) {
               valueH.push_back(valeurFixer[nomVar][f + 1]);
               findValuer = true;
@@ -619,7 +625,7 @@ transformationASM(std::vector<std::string>                                      
           }
         }
         if (nomVar == "R30" || nomVar == "R28" || nomVar == "R26" ||
-            key == "MOV" && (nomVarMov == "R30" || nomVarMov == "R26" || nomVarMov == "R28")) {
+            (key == "MOV" && (nomVarMov == "R30" || nomVarMov == "R26" || nomVarMov == "R28"))) {
           if (nomVar == "R30" || nomVarMov == "R30") {
             if (LPMReg) {
               stockLPMR30 = stockR30;
@@ -637,11 +643,11 @@ transformationASM(std::vector<std::string>                                      
             stockR26 = valueH;
           }
         }
-        for (int cpt = 0; cpt < nbLabel; cpt++) {
+        for (std::size_t cpt = 0; cpt < nbLabel; cpt++) {
           bool trouver = false;
-          for (int taille = 0; taille < valueH.size() && !trouver; taille++) {
+          for (std::size_t taille = 0; taille < valueH.size() && !trouver; taille++) {
             if (cpt == valueH[taille]) {
-              variableProb[cpt] = (1.0 / valueH.size());
+              variableProb[cpt] = 1.f / valueH.size();
               trouver           = true;
             }
           }
@@ -660,10 +666,10 @@ transformationASM(std::vector<std::string>                                      
           std::vector<std::vector<std::vector<float>>> tmpProba(1);
           std::vector<std::vector<float>>              tmp(nbLabel);
           tmpProba[0] = tmp;
-          for (int cpt2 = 0; cpt2 < nbLabel; cpt2++) {
+          for (std::size_t cpt2 = 0; cpt2 < nbLabel; cpt2++) {
             std::vector<float> tmp2(nbLabel);
             tmpProba[0][cpt2] = tmp2;
-            for (int cpt3 = 0; cpt3 < nbLabel; cpt3++) {
+            for (std::size_t cpt3 = 0; cpt3 < nbLabel; cpt3++) {
               tmpProba[0][cpt2][cpt3] = tabProbFonc[0][cpt2] * tabProbFonc[1][cpt3];
             }
           }
@@ -702,30 +708,30 @@ transformationASM(std::vector<std::string>                                      
   return varIndex;
 }
 
-bool findCycle(std::map<int, std::vector<std::string>> varFonc,
-               std::map<std::string, std::vector<int>> link,
-               std::string                             cible,
-               int                                     id,
-               std::map<std::string, int>&                     vue)
+bool findCycle(std::map<std::size_t, std::vector<std::string>> varFonc,
+               std::map<std::string, std::vector<std::size_t>> link,
+               std::string                                     cible,
+               std::size_t                                     id,
+               std::map<std::string, std::size_t>&             vue)
 {
   std::vector<std::string> fonctionTmp = varFonc[id];
   bool                     parcour     = false;
 
-  for (int i = 0; i < fonctionTmp.size() && !parcour; i++) {
+  for (std::size_t i = 0; i < fonctionTmp.size() && !parcour; i++) {
     if (vue.find(fonctionTmp[i]) == vue.end()) {
       vue[fonctionTmp[i]] = 1;
       if (fonctionTmp[i] == cible) {
         parcour = true;
       }
-      std::vector<int> lien = link[fonctionTmp[i]];
+      std::vector<std::size_t> lien = link[fonctionTmp[i]];
 
-      for (int j = 0; j < lien.size() && !parcour; j++) {
+      for (std::size_t j = 0; j < lien.size() && !parcour; j++) {
         if (lien[j] != id && varFonc[lien[j]].size() > 1) {
-          std::map<int, std::vector<std::string>>           tmp = varFonc;
-          std::map<int, std::vector<std::string>>::iterator it  = tmp.begin();
+          std::map<std::size_t, std::vector<std::string>>           tmp = varFonc;
+          std::map<std::size_t, std::vector<std::string>>::iterator it  = tmp.begin();
           while (it != tmp.end()) {
             if (it->first == id) {
-              std::map<int, std::vector<std::string>>::iterator erase = it;
+              std::map<std::size_t, std::vector<std::string>>::iterator erase = it;
               ++it;
               tmp.erase(erase);
             } else {
@@ -741,12 +747,12 @@ bool findCycle(std::map<int, std::vector<std::string>> varFonc,
   return parcour;
 }
 
-bool findLittleCycle(std::map<int, std::vector<std::string>> varFonc, std::string cible, int id)
+bool findLittleCycle(std::map<std::size_t, std::vector<std::string>> varFonc, std::string cible, std::size_t id)
 {
   std::vector<std::string> fonctionTmp = varFonc[id];
   bool                     parcour     = false;
 
-  for (int i = 0; i < fonctionTmp.size() && !parcour; i++) {
+  for (std::size_t i = 0; i < fonctionTmp.size() && !parcour; i++) {
     if (fonctionTmp[i] == cible) {
       parcour = true;
     }
@@ -755,10 +761,10 @@ bool findLittleCycle(std::map<int, std::vector<std::string>> varFonc, std::strin
   return parcour;
 }
 
-std::vector<int> hammingToDecimal(int h)
+std::vector<std::size_t> hammingToDecimal(std::size_t h)
 {
-  std::vector<int> value;
-  for (int i = 0; i < 256; i++) {
+  std::vector<std::size_t> value;
+  for (std::size_t i = 0; i < 256; i++) {
     if (NumberOfSetBits(i) == h) {
       value.push_back(i);
     }
@@ -766,7 +772,8 @@ std::vector<int> hammingToDecimal(int h)
 
   return value;
 }
-int NumberOfSetBits(int i)
+
+std::size_t NumberOfSetBits(std::size_t i)
 {
   i = i - ((i >> 1) & 0x55555555);
   i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
@@ -774,12 +781,12 @@ int NumberOfSetBits(int i)
   return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
 }
 
-void hammingInstructionIteration(std::string                key,
-                                 int&                       ValeurKey,
-                                 std::string&               hammingweight,
-                                 std::vector<std::string>   contenue,
-                                 int                        i,
-                                 std::map<std::string, int> instruction)
+void hammingInstructionIteration(std::string                        key,
+                                 std::size_t&                       ValeurKey,
+                                 std::string&                       hammingweight,
+                                 std::vector<std::string>           contenue,
+                                 std::size_t                        i,
+                                 std::map<std::string, std::size_t> instruction)
 {
   if (instruction[key] > 4 && instruction[key] < 6) {
     if (std::string::npos != contenue[i].find("Z+") || std::string::npos != contenue[i].find("X+") ||
@@ -801,7 +808,7 @@ void hammingInstructionIteration(std::string                key,
       ValeurKey         = 1;
     }
   } else if (instruction[key] > 6 || key == "RET") {
-    for (int compteur = 0; compteur < instruction[key]; compteur++) {
+    for (std::size_t compteur = 0; compteur < instruction[key]; compteur++) {
       hammingweight = hammingweight.substr(hammingweight.find(",") + 1);
     }
     ValeurKey = 0;
@@ -823,7 +830,7 @@ void hammingInstructionIteration(std::string                key,
   }
 }
 
-void instructionTaken(std::map<std::string, int>& instruction, std::map<std::string, int>& traitement)
+void instructionTaken(std::map<std::string, std::size_t>& instruction, std::map<std::string, std::size_t>& traitement)
 {
   instruction["ADD"]   = 3;
   instruction["ADIW"]  = 4;
@@ -858,23 +865,23 @@ void instructionTaken(std::map<std::string, int>& instruction, std::map<std::str
 }
 
 void specialInstruction(std::string                                   key,
-                        std::map<std::string, int>                    traitement,
+                        std::map<std::string, std::size_t>            traitement,
                         std::vector<std::vector<std::vector<float>>>& tmpProba,
                         std::vector<std::vector<float>>               tabProbFonc,
-                        int                                           nbLabel)
+                        std::size_t                                   nbLabel)
 {
   if (traitement.find(key) != traitement.end()) {
-    int nombreExis = 0;
+    std::size_t nombreExis = 0;
     switch (traitement[key]) {
     case 0:
-      for (int cpt = 0; cpt < nbLabel; cpt++) {
+      for (std::size_t cpt = 0; cpt < nbLabel; cpt++) {
         std::vector<std::vector<float>> tmp(nbLabel);
         tmpProba[cpt] = tmp;
-        for (int cpt2 = 0; cpt2 < nbLabel; cpt2++) {
+        for (std::size_t cpt2 = 0; cpt2 < nbLabel; cpt2++) {
           std::vector<float> tmp2(nbLabel);
           tmpProba[cpt][cpt2] = tmp2;
-          for (int cpt3 = 0; cpt3 < nbLabel; cpt3++) {
-            if (tabProbFonc[0][cpt] != 0 && tabProbFonc[1][cpt2] != 0 && tabProbFonc[2][cpt3] != 0) {
+          for (std::size_t cpt3 = 0; cpt3 < nbLabel; cpt3++) {
+            if (tabProbFonc[0][cpt] != 0.f && tabProbFonc[1][cpt2] != 0.f && tabProbFonc[2][cpt3] != 0.f) {
               if ((cpt + cpt2) == cpt3) {
                 tmpProba[cpt][cpt2][cpt3] = 1;
                 nombreExis++;
@@ -885,26 +892,26 @@ void specialInstruction(std::string                                   key,
           }
         }
       }
-      for (int cpt = 0; cpt < nbLabel; cpt++) {
-        for (int cpt2 = 0; cpt2 < nbLabel; cpt2++) {
-          for (int cpt3 = 0; cpt3 < nbLabel; cpt3++) {
-            if (tmpProba[cpt][cpt2][cpt3] == 1) {
-              tmpProba[cpt][cpt2][cpt3] = 1.0 / nombreExis;
+      for (std::size_t cpt = 0; cpt < nbLabel; cpt++) {
+        for (std::size_t cpt2 = 0; cpt2 < nbLabel; cpt2++) {
+          for (std::size_t cpt3 = 0; cpt3 < nbLabel; cpt3++) {
+            if (tmpProba[cpt][cpt2][cpt3] == 1.f) {
+              tmpProba[cpt][cpt2][cpt3] = 1.f / nombreExis;
             }
           }
         }
       }
       break;
     case 1:
-      for (int cpt = 0; cpt < nbLabel; cpt++) {
+      for (std::size_t cpt = 0; cpt < nbLabel; cpt++) {
         std::vector<std::vector<float>> tmp(nbLabel);
         tmpProba[cpt] = tmp;
-        for (int cpt2 = 0; cpt2 < nbLabel; cpt2++) {
+        for (std::size_t cpt2 = 0; cpt2 < nbLabel; cpt2++) {
           std::vector<float> tmp2(nbLabel);
           tmpProba[cpt][cpt2] = tmp2;
-          for (int cpt3 = 0; cpt3 < nbLabel; cpt3++) {
-            if (tabProbFonc[0][cpt] != 0 && tabProbFonc[1][cpt2] != 0 && tabProbFonc[2][cpt3] != 0) {
-              int xortmp = cpt;
+          for (std::size_t cpt3 = 0; cpt3 < nbLabel; cpt3++) {
+            if (tabProbFonc[0][cpt] != 0.f && tabProbFonc[1][cpt2] != 0.f && tabProbFonc[2][cpt3] != 0.f) {
+              std::size_t xortmp = cpt;
               xortmp ^= cpt2;
               if (xortmp == cpt3) {
                 tmpProba[cpt][cpt2][cpt3] = 1;
@@ -916,25 +923,25 @@ void specialInstruction(std::string                                   key,
           }
         }
       }
-      for (int cpt = 0; cpt < nbLabel; cpt++) {
-        for (int cpt2 = 0; cpt2 < nbLabel; cpt2++) {
-          for (int cpt3 = 0; cpt3 < nbLabel; cpt3++) {
-            if (tmpProba[cpt][cpt2][cpt3] == 1) {
-              tmpProba[cpt][cpt2][cpt3] = 1.0 / nombreExis;
+      for (std::size_t cpt = 0; cpt < nbLabel; cpt++) {
+        for (std::size_t cpt2 = 0; cpt2 < nbLabel; cpt2++) {
+          for (std::size_t cpt3 = 0; cpt3 < nbLabel; cpt3++) {
+            if (tmpProba[cpt][cpt2][cpt3] == 1.f) {
+              tmpProba[cpt][cpt2][cpt3] = 1.f / nombreExis;
             }
           }
         }
       }
       break;
     case 2:
-      for (int cpt = 0; cpt < nbLabel; cpt++) {
+      for (std::size_t cpt = 0; cpt < nbLabel; cpt++) {
         std::vector<std::vector<float>> tmp(nbLabel);
         tmpProba[cpt] = tmp;
-        for (int cpt2 = 0; cpt2 < nbLabel; cpt2++) {
+        for (std::size_t cpt2 = 0; cpt2 < nbLabel; cpt2++) {
           std::vector<float> tmp2(nbLabel);
           tmpProba[cpt][cpt2] = tmp2;
-          for (int cpt3 = 0; cpt3 < nbLabel; cpt3++) {
-            if (tabProbFonc[0][cpt] != 0 && tabProbFonc[1][cpt2] != 0 && tabProbFonc[2][cpt3] != 0) {
+          for (std::size_t cpt3 = 0; cpt3 < nbLabel; cpt3++) {
+            if (tabProbFonc[0][cpt] != 0.f && tabProbFonc[1][cpt2] != 0.f && tabProbFonc[2][cpt3] != 0.f) {
               if ((cpt - cpt2) == cpt3) {
                 tmpProba[cpt][cpt2][cpt3] = 1;
                 nombreExis++;
@@ -945,26 +952,26 @@ void specialInstruction(std::string                                   key,
           }
         }
       }
-      for (int cpt = 0; cpt < nbLabel; cpt++) {
-        for (int cpt2 = 0; cpt2 < nbLabel; cpt2++) {
-          for (int cpt3 = 0; cpt3 < nbLabel; cpt3++) {
-            if (tmpProba[cpt][cpt2][cpt3] == 1) {
-              tmpProba[cpt][cpt2][cpt3] = 1.0 / nombreExis;
+      for (std::size_t cpt = 0; cpt < nbLabel; cpt++) {
+        for (std::size_t cpt2 = 0; cpt2 < nbLabel; cpt2++) {
+          for (std::size_t cpt3 = 0; cpt3 < nbLabel; cpt3++) {
+            if (tmpProba[cpt][cpt2][cpt3] == 1.f) {
+              tmpProba[cpt][cpt2][cpt3] = 1.f / nombreExis;
             }
           }
         }
       }
       break;
     case 3:
-      for (int cpt = 0; cpt < nbLabel; cpt++) {
+      for (std::size_t cpt = 0; cpt < nbLabel; cpt++) {
         std::vector<std::vector<float>> tmp(nbLabel);
         tmpProba[cpt] = tmp;
-        for (int cpt2 = 0; cpt2 < nbLabel; cpt2++) {
+        for (std::size_t cpt2 = 0; cpt2 < nbLabel; cpt2++) {
           std::vector<float> tmp2(nbLabel);
           tmpProba[cpt][cpt2] = tmp2;
-          for (int cpt3 = 0; cpt3 < nbLabel; cpt3++) {
-            if (tabProbFonc[0][cpt] != 0 && tabProbFonc[1][cpt2] != 0 && tabProbFonc[2][cpt3] != 0) {
-              int andTmp = cpt;
+          for (std::size_t cpt3 = 0; cpt3 < nbLabel; cpt3++) {
+            if (tabProbFonc[0][cpt] != 0.f && tabProbFonc[1][cpt2] != 0.f && tabProbFonc[2][cpt3] != 0.f) {
+              std::size_t andTmp = cpt;
               andTmp &= cpt2;
               if (andTmp == cpt3) {
                 tmpProba[cpt][cpt2][cpt3] = 1;
@@ -976,11 +983,11 @@ void specialInstruction(std::string                                   key,
           }
         }
       }
-      for (int cpt = 0; cpt < nbLabel; cpt++) {
-        for (int cpt2 = 0; cpt2 < nbLabel; cpt2++) {
-          for (int cpt3 = 0; cpt3 < nbLabel; cpt3++) {
-            if (tmpProba[cpt][cpt2][cpt3] == 1) {
-              tmpProba[cpt][cpt2][cpt3] = 1.0 / nombreExis;
+      for (std::size_t cpt = 0; cpt < nbLabel; cpt++) {
+        for (std::size_t cpt2 = 0; cpt2 < nbLabel; cpt2++) {
+          for (std::size_t cpt3 = 0; cpt3 < nbLabel; cpt3++) {
+            if (tmpProba[cpt][cpt2][cpt3] == 1.f) {
+              tmpProba[cpt][cpt2][cpt3] = 1.f / nombreExis;
             }
           }
         }
@@ -990,13 +997,13 @@ void specialInstruction(std::string                                   key,
       std::cout << "error isntruction \n";
     }
   } else {
-    for (int cpt = 0; cpt < nbLabel; cpt++) {
+    for (std::size_t cpt = 0; cpt < nbLabel; cpt++) {
       std::vector<std::vector<float>> tmp(nbLabel);
       tmpProba[cpt] = tmp;
-      for (int cpt2 = 0; cpt2 < nbLabel; cpt2++) {
+      for (std::size_t cpt2 = 0; cpt2 < nbLabel; cpt2++) {
         std::vector<float> tmp2(nbLabel);
         tmpProba[cpt][cpt2] = tmp2;
-        for (int cpt3 = 0; cpt3 < nbLabel; cpt3++) {
+        for (std::size_t cpt3 = 0; cpt3 < nbLabel; cpt3++) {
           tmpProba[cpt][cpt2][cpt3] = tabProbFonc[0][cpt] * tabProbFonc[1][cpt2] * tabProbFonc[2][cpt3];
         }
       }
@@ -1004,26 +1011,26 @@ void specialInstruction(std::string                                   key,
   }
 }
 
-void standartInstruction(std::string                                   key,
-                         std::vector<std::vector<std::vector<float>>>& tmpProba,
-                         int                                           nbLabel,
-                         std::map<std::string, int>&                   fonctions,
-                         std::string                                   nomFonction,
-                         std::vector<std::vector<float>>               tabProbFonc,
-                         std::vector<int>                              stockR30,
-                         std::vector<int>                              stockR28,
-                         std::vector<int>                              stockR26,
-                         std::vector<int>                              stockLPMR30,
-                         std::vector<int>                              stockLPMR28,
-                         std::vector<int>                              stockLPMR26,
-                         std::map<std::string, int>                    varIndex,
-                         std::map<int, std::vector<std::string>>&      varFonc,
-                         int                                           i,
-                         bool                                          LPMReg,
-                         int                                           idLPMReg,
-                         std::string                                   ligneEnCours,
-                         std::map<int, std::vector<int>>               box,
-                         std::vector<int>&                             lienF)
+void standartInstruction(std::string                                      key,
+                         std::vector<std::vector<std::vector<float>>>&    tmpProba,
+                         std::size_t                                      nbLabel,
+                         std::map<std::string, std::size_t>&              fonctions,
+                         std::string                                      nomFonction,
+                         std::vector<std::vector<float>>                  tabProbFonc,
+                         std::vector<std::size_t>                         stockR30,
+                         std::vector<std::size_t>                         stockR28,
+                         std::vector<std::size_t>                         stockR26,
+                         std::vector<std::size_t>                         stockLPMR30,
+                         std::vector<std::size_t>                         stockLPMR28,
+                         std::vector<std::size_t>                         stockLPMR26,
+                         std::map<std::string, std::size_t>               varIndex,
+                         std::map<std::size_t, std::vector<std::string>>& varFonc,
+                         std::size_t                                      i,
+                         bool                                             LPMReg,
+                         std::size_t                                      idLPMReg,
+                         std::string                                      ligneEnCours,
+                         std::map<std::size_t, std::vector<std::size_t>>  box,
+                         std::vector<std::size_t>&                        lienF)
 {
   std::vector<std::vector<float>> tmp(1);
   tmpProba[0] = tmp;
@@ -1032,16 +1039,16 @@ void standartInstruction(std::string                                   key,
   tmpProba[0][0] = tmp2;
   if (key == "LPM" && box.find(i) != box.end()) {
     fonctions[nomFonction] = 2;
-    int                             iden;
+    std::size_t                     iden;
     std::vector<std::vector<float>> tmp3(nbLabel);
     tmpProba[0] = tmp3;
-    for (int att = 0; att < nbLabel; att++) {
+    for (std::size_t att = 0; att < nbLabel; att++) {
       std::vector<float> tmp4(nbLabel);
       tmpProba[0][att] = tmp4;
     }
 
-    std::vector<int> offset;
-    int              indexLigne = ligneEnCours.find(",");
+    std::vector<std::size_t> offset;
+    std::size_t              indexLigne = ligneEnCours.find(",");
     if (LPMReg) {
       iden = idLPMReg;
       if (ligneEnCours.substr(indexLigne, indexLigne + 2).find("Z") != std::string::npos) {
@@ -1067,10 +1074,10 @@ void standartInstruction(std::string                                   key,
     varFonc[iden].push_back(nomFonction);
     // varIndex[nomVar]=iden;
 
-    for (int v = 0; v < nbLabel; v++) {
-      for (int a = 0; a < offset.size(); a++) {
+    for (std::size_t v = 0; v < nbLabel; v++) {
+      for (std::size_t a = 0; a < offset.size(); a++) {
         if (offset[a] < box[i].size()) {
-          int tmp = box[i][offset[a]];
+          std::size_t tmp = box[i][offset[a]];
           if (tabProbFonc[0][v] > 0 && tmp == v) {
             tmpProba[0][v][offset[a]] = 1;
           }
@@ -1078,7 +1085,7 @@ void standartInstruction(std::string                                   key,
       }
     }
   } else {
-    for (int cpt3 = 0; cpt3 < nbLabel; cpt3++) {
+    for (std::size_t cpt3 = 0; cpt3 < nbLabel; cpt3++) {
       tmpProba[0][0][cpt3] = tabProbFonc[0][cpt3];
     }
   }
