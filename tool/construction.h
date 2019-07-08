@@ -22,7 +22,7 @@ typedef opengm::GraphicalModel<float, opengm::Adder> Model;
  * @param vars the variable in the model
  * @return
  */
-Model modelCreation(std::map<std::__cxx11::string, int>                                  fonctions,
+Model modelCreation(std::map<std::string, int>                                           fonctions,
                     std::map<std::string, std::vector<std::vector<std::vector<float>>>>& probaTab,
                     std::map<std::string, std::vector<int>>                              link,
                     std::vector<int>                                                     var);
@@ -57,7 +57,7 @@ void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> p
  * @param allVariables true for have all varaible , false for print only the
  * most
  */
-void beliefPropagation(Model gm, std::vector<std::__cxx11::string>& output, int iteration, bool allVariables);
+void beliefPropagation(Model gm, std::vector<std::string>& output, int iteration, bool allVariables);
 /**
  * @brief transformationASM
  * @param contenue the vector whiwh contain the execution stack
@@ -78,9 +78,9 @@ transformationASM(std::vector<std::string>                                      
                   std::map<std::string, std::vector<std::vector<std::vector<float>>>>& probaTab,
                   std::map<std::string, std::vector<int>>&                             link,
                   std::vector<int>&                                                    var,
-                  std::map<std::__cxx11::string, int>&                                 fonctions,
-                  std::__cxx11::string                                                 hammingweight,
-                  std::map<std::__cxx11::string, std::vector<int>>                     valeurFixer,
+                  std::map<std::string, int>&                                          fonctions,
+                  std::string                                                          hammingweight,
+                  std::map<std::string, std::vector<int>>                              valeurFixer,
                   std::map<int, int>                                                   valeurResultat,
                   std::map<int, std::vector<int>>                                      box,
                   bool                                                                 graph,
@@ -96,9 +96,9 @@ transformationASM(std::vector<std::string>                                      
  */
 bool findCycle(std::map<int, std::vector<std::string>> varFonc,
                std::map<std::string, std::vector<int>> link,
-               std::__cxx11::string                    cible,
+               std::string                                     cible,
                int                                     id,
-               std::map<std::__cxx11::string, int>&    vue);
+               std::map<std::string, int>&                     vue);
 /**
  * @brief hammingToDecimal
  * @param h
@@ -179,7 +179,7 @@ void specialInstruction(std::string                                   key,
 void standartInstruction(std::string                                   key,
                          std::vector<std::vector<std::vector<float>>>& tmpProba,
                          int                                           nbLabel,
-                         std::map<std::__cxx11::string, int>&          fonctions,
+                         std::map<std::string, int>&                   fonctions,
                          std::string                                   nomFonction,
                          std::vector<std::vector<float>>               tabProbFonc,
                          std::vector<int>                              stockR30,

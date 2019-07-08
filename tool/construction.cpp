@@ -2,8 +2,8 @@
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 #include <opengm/inference/icm.hxx>
 
-Model modelCreation(std::map<std::__cxx11::string, int>                                           fonctions,
-                    std::map<std::__cxx11::string, std::vector<std::vector<std::vector<float>>>>& probaTab,
+Model modelCreation(std::map<std::string, int>                                           fonctions,
+                    std::map<std::string, std::vector<std::vector<std::vector<float>>>>& probaTab,
                     std::map<std::string, std::vector<int>>                                       link,
                     std::vector<int>                                                              var)
 {
@@ -212,7 +212,7 @@ void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> p
   gm->addFactor(id, variableIndexSequence, variableIndexSequence + 3);
 }
 
-void beliefPropagation(Model gm, std::vector<std::__cxx11::string>& output, int iteration, bool allVariables)
+void beliefPropagation(Model gm, std::vector<std::string>& output, int iteration, bool allVariables)
 {
   typedef opengm::BeliefPropagationUpdateRules<Model, opengm::Maximizer>                     UpdateRules;
   typedef opengm::MessagePassing<Model, opengm::Maximizer, UpdateRules, opengm::MaxDistance> BeliefPropagation;
@@ -271,7 +271,7 @@ transformationASM(std::vector<std::string>                                      
                   std::map<std::string, std::vector<std::vector<std::vector<float>>>>& probaTab,
                   std::map<std::string, std::vector<int>>&                             link,
                   std::vector<int>&                                                    var,
-                  std::map<std::__cxx11::string, int>&                                 fonctions,
+                  std::map<std::string, int>&                                          fonctions,
                   std::string                                                          hammingweight,
                   std::map<std::string, std::vector<int>>                              valeurFixer,
                   std::map<int, int>                                                   valeurResultat,
@@ -706,7 +706,7 @@ bool findCycle(std::map<int, std::vector<std::string>> varFonc,
                std::map<std::string, std::vector<int>> link,
                std::string                             cible,
                int                                     id,
-               std::map<std::__cxx11::string, int>&    vue)
+               std::map<std::string, int>&                     vue)
 {
   std::vector<std::string> fonctionTmp = varFonc[id];
   bool                     parcour     = false;
@@ -1007,7 +1007,7 @@ void specialInstruction(std::string                                   key,
 void standartInstruction(std::string                                   key,
                          std::vector<std::vector<std::vector<float>>>& tmpProba,
                          int                                           nbLabel,
-                         std::map<std::__cxx11::string, int>&          fonctions,
+                         std::map<std::string, int>&                   fonctions,
                          std::string                                   nomFonction,
                          std::vector<std::vector<float>>               tabProbFonc,
                          std::vector<int>                              stockR30,
