@@ -32,21 +32,21 @@ Model modelCreation(std::map<std::string, std::size_t>                          
  * @param prob
  * @param var
  */
-void fonctionPremier(Model* gm, std::vector<float> prob, std::size_t var);
+void fonctionPremier(Model& gm, std::vector<float> prob, std::size_t var);
 /**
  * @brief fonctionSecond
  * @param gm
  * @param prob
  * @param var
  */
-void fonctionSecond(Model* gm, std::vector<std::vector<float>> prob, std::size_t var[]);
+void fonctionSecond(Model& gm, std::vector<std::vector<float>> prob, std::size_t var[]);
 /**
  * @brief fonctionTroisieme
  * @param gm
  * @param prob
  * @param var
  */
-void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> prob, std::size_t var[]);
+void fonctionTroisieme(Model& gm, std::vector<std::vector<std::vector<float>>> prob, std::size_t var[]);
 
 /**
  * @brief beliefPropagation this fonction resolve a factor graph with belief
@@ -57,7 +57,7 @@ void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> p
  * @param allVariables true for have all varaible , false for prstd::size_t only the
  * most
  */
-void beliefPropagation(Model gm, std::vector<std::string>& output, std::size_t iteration, bool allVariables);
+void beliefPropagation(Model const& gm, std::vector<std::string>& output, std::size_t iteration, bool allVariables);
 /**
  * @brief transformationASM
  * @param contenue the vector whiwh contain the execution stack

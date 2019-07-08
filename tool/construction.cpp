@@ -36,7 +36,7 @@ Model modelCreation(std::map<std::string, std::size_t>                          
           ++it;
         }
       }
-      fonctionPremier(&gm, prob, variable);
+      fonctionPremier(gm, prob, variable);
     } else if ((*ii).second == 2) {
       bool                            recherche   = false;
       std::size_t                     variable[2] = {0, 0};
@@ -64,7 +64,7 @@ Model modelCreation(std::map<std::string, std::size_t>                          
       std::size_t variableF[2];
       variableF[0] = variable[0];
       variableF[1] = variable[1];
-      fonctionSecond(&gm, prob, variableF);
+      fonctionSecond(gm, prob, variableF);
     } else if ((*ii).second == 3) {
       bool                                         recherche   = false;
       std::size_t                                  variable[3] = {0, 0, 0};
@@ -90,7 +90,7 @@ Model modelCreation(std::map<std::string, std::size_t>                          
           ++it;
         }
       }
-      fonctionTroisieme(&gm, prob, variable);
+      fonctionTroisieme(gm, prob, variable);
     } else {
       std::cout << "n'a pas de variable ou en a plus que 3" << std::endl;
     }
@@ -104,29 +104,29 @@ Model modelCreation(std::map<std::string, std::size_t>                          
   return gm;
 }
 
-void fonctionPremier(Model* gm, std::vector<float> prob, std::size_t var)
+void fonctionPremier(Model& gm, std::vector<float> prob, std::size_t var)
 {
   typedef opengm::ExplicitFunction<float> ExplicitFunction;
   typedef Model::FunctionIdentifier       FunctionIdentifier;
-  const size_t                            shape[] = {gm->numberOfLabels(var)};
+  const size_t                            shape[] = {gm.numberOfLabels(var)};
   ExplicitFunction                        f(shape, shape + 1);
   for (size_t state = 0; state < prob.size(); ++state) {
     f(state) = prob[state];
     // std::cout <<" state : "<< state << " " << prob[state]<< std::endl;
   }
   // add function
-  FunctionIdentifier id = gm->addFunction(f);
+  FunctionIdentifier id = gm.addFunction(f);
   // add factor
   // std::cout<<"creation de la fonction "<< var << std::endl;
   size_t variableIndex[] = {var};
-  gm->addFactor(id, variableIndex, variableIndex + 1);
+  gm.addFactor(id, variableIndex, variableIndex + 1);
 }
 
-void fonctionSecond(Model* gm, std::vector<std::vector<float>> prob, std::size_t var[])
+void fonctionSecond(Model& gm, std::vector<std::vector<float>> prob, std::size_t var[])
 { // a verif
   typedef opengm::ExplicitFunction<float> ExplicitFunction;
   typedef Model::FunctionIdentifier       FunctionIdentifier;
-  const size_t                            shape[] = {gm->numberOfLabels(var[0]), gm->numberOfLabels(var[1])};
+  const size_t                            shape[] = {gm.numberOfLabels(var[0]), gm.numberOfLabels(var[1])};
 
   std::size_t variableIndex[2];
   std::size_t position[2];
@@ -152,15 +152,15 @@ void fonctionSecond(Model* gm, std::vector<std::vector<float>> prob, std::size_t
     }
   }
   // add function
-  FunctionIdentifier id = gm->addFunction(f);
-  gm->addFactor(id, variableIndex, variableIndex + 2);
+  FunctionIdentifier id = gm.addFunction(f);
+  gm.addFactor(id, variableIndex, variableIndex + 2);
 }
 
-void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> prob, std::size_t var[])
+void fonctionTroisieme(Model& gm, std::vector<std::vector<std::vector<float>>> prob, std::size_t var[])
 {
   typedef opengm::ExplicitFunction<float> ExplicitFunction;
   typedef Model::FunctionIdentifier       FunctionIdentifier;
-  const size_t shape[] = {gm->numberOfLabels(var[0]), gm->numberOfLabels(var[1]), gm->numberOfLabels(var[2])};
+  const size_t shape[] = {gm.numberOfLabels(var[0]), gm.numberOfLabels(var[1]), gm.numberOfLabels(var[2])};
   // construct 3rd order function
 
   // sequences of variable indices need to be (and in this case are) sorted
@@ -189,9 +189,9 @@ void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> p
       }
     }
   }
-  std::size_t      indice1 = gm->numberOfLabels(variableIndexSequence[0]);
-  std::size_t      indice2 = gm->numberOfLabels(variableIndexSequence[0]);
-  std::size_t      indice3 = gm->numberOfLabels(variableIndexSequence[0]);
+  std::size_t      indice1 = gm.numberOfLabels(variableIndexSequence[0]);
+  std::size_t      indice2 = gm.numberOfLabels(variableIndexSequence[0]);
+  std::size_t      indice3 = gm.numberOfLabels(variableIndexSequence[0]);
   ExplicitFunction f(shape, shape + 3, 0);
   size_t           state1, state2, state3;
   size_t*          proba1[3];
@@ -209,11 +209,11 @@ void fonctionTroisieme(Model* gm, std::vector<std::vector<std::vector<float>>> p
     }
   }
 
-  FunctionIdentifier id = gm->addFunction(f);
-  gm->addFactor(id, variableIndexSequence, variableIndexSequence + 3);
+  FunctionIdentifier id = gm.addFunction(f);
+  gm.addFactor(id, variableIndexSequence, variableIndexSequence + 3);
 }
 
-void beliefPropagation(Model gm, std::vector<std::string>& output, std::size_t iteration, bool allVariables)
+void beliefPropagation(Model const& gm, std::vector<std::string>& output, std::size_t iteration, bool allVariables)
 {
   typedef opengm::BeliefPropagationUpdateRules<Model, opengm::Maximizer>                     UpdateRules;
   typedef opengm::MessagePassing<Model, opengm::Maximizer, UpdateRules, opengm::MaxDistance> BeliefPropagation;
