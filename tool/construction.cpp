@@ -26,12 +26,13 @@ Model modelCreation(std::map<std::__cxx11::string, int>                         
       }
       recherche = false;
       for (std::map<std::string, std::vector<std::vector<std::vector<float>>>>::iterator it = probaTab.begin();
-           it != probaTab.end() || !recherche;
-           it++) {
+           it != probaTab.end() || !recherche;) {
         if ((*it).first == (*ii).first) {
           recherche = true;
           prob      = (*it).second[0][0];
-          probaTab.erase(it);
+          it        = probaTab.erase(it);
+        } else {
+          ++it;
         }
       }
       fonctionPremier(&gm, prob, variable);
@@ -79,12 +80,13 @@ Model modelCreation(std::map<std::__cxx11::string, int>                         
       }
       recherche = false;
       for (std::map<std::string, std::vector<std::vector<std::vector<float>>>>::iterator it = probaTab.begin();
-           it != probaTab.end() || !recherche;
-           it++) {
+           it != probaTab.end() || !recherche;) {
         if ((*it).first == (*ii).first) {
           recherche = true;
           prob      = (*it).second;
-          probaTab.erase(it);
+          it        = probaTab.erase(it);
+        } else {
+          ++it;
         }
       }
       fonctionTroisieme(&gm, prob, variable);
