@@ -54,11 +54,13 @@ Model modelCreation(std::map<std::string, std::size_t> const&                   
         }
       }
       recherche = false;
-      for (auto it = probaTab.begin(); it != probaTab.end() || !recherche; it++) {
+      for (auto it = probaTab.begin(); it != probaTab.end() || !recherche;) {
         if (it->first == fonction.first) {
           recherche = true;
           prob      = (*it).second[0];
-          probaTab.erase(it);
+          it        = probaTab.erase(it);
+        } else {
+          ++it;
         }
       }
       std::array<std::size_t, 2> variableF{variable[0], variable[1]};
