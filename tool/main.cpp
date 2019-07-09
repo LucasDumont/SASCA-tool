@@ -1,10 +1,10 @@
 #include "construction.h"
 
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 #include <string>
-#include <time.h>
 
 int main()
 {
@@ -15,11 +15,11 @@ int main()
 
   if (fichier && fichierH) {
     getline(fichierH, hamming);
-    for (std::size_t i = 0; i < 30; i++) {
+    for (std::size_t i = 0; i < 30; ++i) {
       std::string contenu;
       std::string token;
       getline(fichier, contenu);
-      if (contenu[50] == ' ') {
+      if (contenu.at(50) == ' ') {
         token = contenu.substr(51, contenu.size());
       } else if (contenu.at(60) == ' ') {
         token = contenu.substr(61, contenu.size());
@@ -29,6 +29,7 @@ int main()
       instruction.push_back(token);
     }
     fichier.close();
+    fichierH.close();
   } else {
     std::cerr << "Error to open the input file!" << std::endl;
   }
@@ -36,29 +37,10 @@ int main()
   std::map<std::string, std::vector<std::size_t>>                     link;
   std::vector<std::size_t>                                            var;
   std::map<std::string, std::size_t>                                  fonction;
-  std::map<std::string, std::vector<std::size_t>>                     paintext;
 
-  std::vector<std::size_t> textOne(4);
-  textOne[0] = 10;
-  textOne[1] = 50;
-  textOne[2] = 16;
-  textOne[3] = 50;
-
-  std::vector<std::size_t> textTwo(4);
-  textTwo[0] = 13;
-  textTwo[1] = 67;
-  textTwo[2] = 17;
-  textTwo[3] = 67;
-
-  paintext["R18"] = textOne;
-  paintext["R19"] = textTwo;
-
-  std::map<std::size_t, std::size_t> ciphertext;
-  ciphertext[28] = 62;
-  ciphertext[29] = 233;
-
-  std::map<std::size_t, std::vector<std::size_t>> box;
-  std::vector<std::size_t>                        sbox = {
+  std::map<std::string, std::vector<std::size_t>> const paintext{{"R18", {10, 50, 16, 50}}, {"R19", {13, 67, 17, 67}}};
+  std::map<std::size_t, std::size_t> const              ciphertext{{28, 62}, {29, 233}};
+  std::vector<std::size_t> const                        sbox = {
       99,  124, 119, 123, 242, 107, 111, 197, 48,  1,   103, 43,  254, 215, 171, 118, 202, 130, 201, 125, 250, 89,
       71,  240, 173, 212, 162, 175, 156, 164, 114, 192, 183, 253, 147, 38,  54,  63,  247, 204, 52,  165, 229, 241,
       113, 216, 49,  21,  4,   199, 35,  195, 24,  150, 5,   154, 7,   18,  128, 226, 235, 39,  178, 117, 9,   131,
@@ -71,9 +53,7 @@ int main()
       180, 198, 232, 221, 116, 31,  75,  189, 139, 138, 112, 62,  181, 102, 72,  3,   246, 14,  97,  53,  87,  185,
       134, 193, 29,  158, 225, 248, 152, 17,  105, 217, 142, 148, 155, 30,  135, 233, 206, 85,  40,  223, 140, 161,
       137, 13,  191, 230, 66,  104, 65,  153, 45,  15,  176, 84,  187, 22};
-
-  box[21] = sbox;
-  box[25] = sbox;
+  std::map<std::size_t, std::vector<std::size_t>> const box{{21, sbox}, {25, sbox}};
 
   std::cout << "Begin transformation " << std::endl;
   transformationASM(instruction, proba, link, var, fonction, hamming, paintext, ciphertext, box, false, false);
@@ -84,20 +64,21 @@ int main()
   // std::cout << "Writing  "<< std::endl;
   // opengm::hdf5::save(gm,"graph_fantastic.h5","test");
 
+  constexpr double         CLOCKS_PER_MILISEC = CLOCKS_PER_SEC / 1000.0;
+  clock_t const            startTime          = clock();
   double                   elapsedTime;
   clock_t                  stopTime;
-  clock_t                  startTime = clock();
   std::vector<std::string> output;
   beliefPropagation(gm, output, 0, true);
 
   stopTime    = clock();
-  elapsedTime = (stopTime - startTime) / (CLOCKS_PER_SEC / 1000.0);
+  elapsedTime = static_cast<double>(stopTime - startTime) / CLOCKS_PER_MILISEC;
   std::cout << "Time :" << elapsedTime << std::endl;
   std::ofstream fichierOut("../output", std::ios::out);
 
   if (fichierOut) {
-    for (std::size_t i = 0; i < output.size(); i++) {
-      fichierOut << output[i] << std::endl;
+    for (const auto& i : output) {
+      fichierOut << i << std::endl;
     }
     fichier.close();
   } else {

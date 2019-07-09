@@ -13,7 +13,8 @@
 #include <opengm/operations/maximizer.hxx>
 #include <string>
 
-typedef opengm::GraphicalModel<float, opengm::Adder> Model;
+using Model = opengm::GraphicalModel<float, opengm::Adder>;
+
 /**
  * @brief modelCreation this fonction a factor graph
  * @param numberOfVar number of variable in the model
@@ -22,31 +23,33 @@ typedef opengm::GraphicalModel<float, opengm::Adder> Model;
  * @param vars the variable in the model
  * @return
  */
-Model modelCreation(std::map<std::string, std::size_t>                                   fonctions,
+Model modelCreation(std::map<std::string, std::size_t> const&                            fonctions,
                     std::map<std::string, std::vector<std::vector<std::vector<float>>>>& probaTab,
-                    std::map<std::string, std::vector<std::size_t>>                      link,
-                    std::vector<std::size_t>                                             var);
+                    std::map<std::string, std::vector<std::size_t>> const&               link,
+                    std::vector<std::size_t> const&                                      var);
 /**
  * @brief fonctionPremier
  * @param gm
  * @param prob
  * @param var
  */
-void fonctionPremier(Model& gm, std::vector<float> prob, std::size_t var);
+void fonctionPremier(Model& gm, std::vector<float> const& prob, std::size_t var);
 /**
  * @brief fonctionSecond
  * @param gm
  * @param prob
  * @param var
  */
-void fonctionSecond(Model& gm, std::vector<std::vector<float>> prob, std::size_t var[]);
+void fonctionSecond(Model& gm, std::vector<std::vector<float>> const& prob, std::array<std::size_t, 2> const& var);
 /**
  * @brief fonctionTroisieme
  * @param gm
  * @param prob
  * @param var
  */
-void fonctionTroisieme(Model& gm, std::vector<std::vector<std::vector<float>>> prob, std::size_t var[]);
+void fonctionTroisieme(Model&                                              gm,
+                       std::vector<std::vector<std::vector<float>>> const& prob,
+                       std::array<std::size_t, 3> const&                   var);
 
 /**
  * @brief beliefPropagation this fonction resolve a factor graph with belief
@@ -80,9 +83,9 @@ transformationASM(std::vector<std::string>                                      
                   std::vector<std::size_t>&                                            var,
                   std::map<std::string, std::size_t>&                                  fonctions,
                   std::string                                                          hammingweight,
-                  std::map<std::string, std::vector<std::size_t>>                      valeurFixer,
+                  std::map<std::string, std::vector<std::size_t>> const&               valeurFixer,
                   std::map<std::size_t, std::size_t>                                   valeurResultat,
-                  std::map<std::size_t, std::vector<std::size_t>>                      box,
+                  const std::map<std::size_t, std::vector<std::size_t>>&               box,
                   bool                                                                 graph,
                   bool                                                                 cycle);
 /**
@@ -94,11 +97,11 @@ transformationASM(std::vector<std::string>                                      
  * @param vue
  * @return
  */
-bool findCycle(std::map<std::size_t, std::vector<std::string>> varFonc,
-               std::map<std::string, std::vector<std::size_t>> link,
-               std::string                                     cible,
-               std::size_t                                     id,
-               std::map<std::string, std::size_t>&             vue);
+bool findCycle(std::map<std::size_t, std::vector<std::string>> const& varFonc,
+               std::map<std::string, std::vector<std::size_t>> const& link,
+               std::string const&                                     cible,
+               std::size_t                                            id,
+               std::map<std::string, std::size_t>&                    vue);
 /**
  * @brief hammingToDecimal
  * @param h
@@ -118,7 +121,9 @@ std::size_t NumberOfSetBits(std::size_t i);
  * @param id
  * @return
  */
-bool findLittleCycle(std::map<std::size_t, std::vector<std::string>> varFonc, std::string cible, std::size_t id);
+bool findLittleCycle(std::map<std::size_t, std::vector<std::string>> const& varFonc,
+                     std::string const&                                     cible,
+                     std::size_t                                            id);
 /**
  * @brief hammingInstructionIteration
  * @param key
@@ -128,12 +133,12 @@ bool findLittleCycle(std::map<std::size_t, std::vector<std::string>> varFonc, st
  * @param i
  * @param instruction
  */
-void hammingInstructionIteration(std::string                        key,
-                                 std::size_t&                       ValeurKey,
-                                 std::string&                       hammingweight,
-                                 std::vector<std::string>           contenue,
-                                 std::size_t                        i,
-                                 std::map<std::string, std::size_t> instruction);
+void hammingInstructionIteration(std::string const&                        key,
+                                 std::size_t&                              ValeurKey,
+                                 std::string&                              hammingweight,
+                                 std::vector<std::string> const&           contenue,
+                                 std::size_t                               i,
+                                 std::map<std::string, std::size_t> const& instruction);
 /**
  * @brief instructionTaken
  * @param instruction
@@ -148,10 +153,10 @@ void instructionTaken(std::map<std::string, std::size_t>& instruction, std::map<
  * @param tabProbFonc
  * @param nbLabel
  */
-void specialInstruction(std::string                                   key,
-                        std::map<std::string, std::size_t>            traitement,
+void specialInstruction(std::string const&                            key,
+                        std::map<std::string, std::size_t> const&     traitement,
                         std::vector<std::vector<std::vector<float>>>& tmpProba,
-                        std::vector<std::vector<float>>               tabProbFonc,
+                        std::vector<std::vector<float>> const&        tabProbFonc,
                         std::size_t                                   nbLabel);
 /**
  * @brief standartInstruction
@@ -176,25 +181,25 @@ void specialInstruction(std::string                                   key,
  * @param box
  * @param lienF
  */
-void standartInstruction(std::string                                      key,
-                         std::vector<std::vector<std::vector<float>>>&    tmpProba,
-                         std::size_t                                      nbLabel,
-                         std::map<std::string, std::size_t>&              fonctions,
-                         std::string                                      nomFonction,
-                         std::vector<std::vector<float>>                  tabProbFonc,
-                         std::vector<std::size_t>                         stockR30,
-                         std::vector<std::size_t>                         stockR28,
-                         std::vector<std::size_t>                         stockR26,
-                         std::vector<std::size_t>                         stockLPMR30,
-                         std::vector<std::size_t>                         stockLPMR28,
-                         std::vector<std::size_t>                         stockLPMR26,
-                         std::map<std::string, std::size_t>               varIndex,
-                         std::map<std::size_t, std::vector<std::string>>& varFonc,
-                         std::size_t                                      i,
-                         bool                                             LPMReg,
-                         std::size_t                                      idLPMReg,
-                         std::string                                      ligneEnCours,
-                         std::map<std::size_t, std::vector<std::size_t>>  box,
-                         std::vector<std::size_t>&                        lienF);
+void standartInstruction(std::string const&                                     key,
+                         std::vector<std::vector<std::vector<float>>>&          tmpProba,
+                         std::size_t                                            nbLabel,
+                         std::map<std::string, std::size_t>&                    fonctions,
+                         std::string const&                                     nomFonction,
+                         std::vector<std::vector<float>> const&                 tabProbFonc,
+                         std::vector<std::size_t>                               stockR30,
+                         std::vector<std::size_t>                               stockR28,
+                         std::vector<std::size_t>                               stockR26,
+                         std::vector<std::size_t>                               stockLPMR30,
+                         std::vector<std::size_t>                               stockLPMR28,
+                         std::vector<std::size_t>                               stockLPMR26,
+                         std::map<std::string, std::size_t>                     varIndex,
+                         std::map<std::size_t, std::vector<std::string>>&       varFonc,
+                         std::size_t                                            i,
+                         bool                                                   LPMReg,
+                         std::size_t                                            idLPMReg,
+                         std::string const&                                     ligneEnCours,
+                         std::map<std::size_t, std::vector<std::size_t>> const& box,
+                         std::vector<std::size_t>&                              lienF);
 
 #endif // CONSTRUCTION_H
