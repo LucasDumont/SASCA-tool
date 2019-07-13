@@ -14,10 +14,9 @@ Model modelCreation(std::map<std::string, std::size_t> const&                   
   opengm::DiscreteSpace<> space;
   for (auto i : var) {
     space.addVariable(i);
-    // std::cout <<" var "<< var[1]<<" ou var"<< var[0]<<std::endl;
   }
   Model gm(space);
-  for (auto& fonction : fonctions) {
+  for (auto const& fonction : fonctions) {
     if (fonction.second == 1) {
       bool               recherche = false;
       std::size_t        variable  = 0;
@@ -273,8 +272,12 @@ transformationASM(std::vector<std::string>                                      
                   bool                                                                 graph,
                   bool                                                                 cycle)
 {
-  std::map<std::string, std::size_t>              instruction;
-  std::map<std::string, std::size_t>              traitement;
+  std::map<std::string, std::size_t> const instruction{
+      {"ADD", 3}, {"ADIW", 4},   {"ADC", 3},   {"LDI", 1},  {"OUT", 2},  {"EOR", 3},  {"CPI", 1},
+      {"CPC", 2}, {"LPM", 5},    {"MOV", 2},   {"MOVW", 2}, {"LDD", 4},  {"ANDI", 2}, {"SBCI", 2},
+      {"STD", 4}, {"RCALL", 34}, {"CALL", 34}, {"SBSR", 1}, {"SBIW", 4}, {"DEC", 2},  {"ST", 5},
+      {"LD", 5},  {"RET", 4},    {"SUB", 3},   {"AND", 3}};
+  std::map<std::string, std::size_t> const        traitement{{"ADD", 0}, {"EOR", 1}, {"SUB", 2}, {"AND", 3}};
   std::map<std::string, std::vector<std::size_t>> RegY;
   std::map<std::string, std::vector<std::size_t>> RegX;
   std::map<std::string, std::vector<std::size_t>> RegZ;
@@ -294,8 +297,6 @@ transformationASM(std::vector<std::string>                                      
   std::string                                     nameRegY;
   std::string                                     nameRegZ;
 
-  instructionTaken(instruction, traitement);
-
   std::size_t nbLabel;
   if (graph) {
     nbLabel = 1;
@@ -311,7 +312,8 @@ transformationASM(std::vector<std::string>                                      
     std::size_t idLPMReg = 0;
     std::string key      = contenue[i].substr(0, contenue[i].find(' '));
 
-    if (instruction.find(key) != instruction.end()) {
+    auto const instruction_key = instruction.find(key);
+    if (instruction_key != instruction.end()) {
       std::string nomFonction = key;
       auto        tmpConca    = boost::lexical_cast<std::string>(i);
 
@@ -319,9 +321,9 @@ transformationASM(std::vector<std::string>                                      
       std::vector<std::size_t> lienF;
       std::string              ligneEnCours;
       ligneEnCours          = contenue[i].substr(contenue[i].find(' ') + 1);
-      std::size_t ValeurKey = instruction[key];
+      std::size_t ValeurKey = instruction_key->second;
 
-      if (instruction[key] > 3) {
+      if (instruction_key->second > 3) {
         hammingInstructionIteration(key, ValeurKey, hammingweight, contenue, i, instruction);
       }
       if (key == "MOV") {
@@ -730,9 +732,7 @@ bool findCycle(std::map<std::size_t, std::vector<std::string>> const& varFonc,
           auto it  = tmp.begin();
           while (it != tmp.end()) {
             if (it->first == id) {
-              auto erase = it;
-              ++it;
-              tmp.erase(erase);
+              it = tmp.erase(it);
             } else {
               ++it;
             }
@@ -829,40 +829,6 @@ void hammingInstructionIteration(std::string const&                        key,
     hammingweight     = tempo + "," + hammingweight;
     ValeurKey         = 1;
   }
-}
-
-void instructionTaken(std::map<std::string, std::size_t>& instruction, std::map<std::string, std::size_t>& traitement)
-{
-  instruction["ADD"]   = 3;
-  instruction["ADIW"]  = 4;
-  instruction["ADC"]   = 3;
-  instruction["LDI"]   = 1;
-  instruction["OUT"]   = 2;
-  instruction["EOR"]   = 3;
-  instruction["CPI"]   = 1;
-  instruction["CPC"]   = 2;
-  instruction["LPM"]   = 5;
-  instruction["MOV"]   = 2;
-  instruction["MOVW"]  = 2;
-  instruction["LDD"]   = 4;
-  instruction["ANDI"]  = 2;
-  instruction["SBCI"]  = 2;
-  instruction["STD"]   = 4;
-  instruction["RCALL"] = 34;
-  instruction["CALL"]  = 34;
-  instruction["SBSR"]  = 1;
-  instruction["SBIW"]  = 4;
-  instruction["DEC"]   = 2;
-  instruction["ST"]    = 5;
-  instruction["LD"]    = 5;
-  instruction["RET"]   = 4;
-  instruction["SUB"]   = 3;
-  instruction["AND"]   = 3;
-
-  traitement["ADD"] = 0;
-  traitement["EOR"] = 1;
-  traitement["SUB"] = 2;
-  traitement["AND"] = 3;
 }
 
 void specialInstruction(std::string const&                            key,

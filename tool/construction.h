@@ -140,12 +140,6 @@ void hammingInstructionIteration(std::string const&                        key,
                                  std::size_t                               i,
                                  std::map<std::string, std::size_t> const& instruction);
 /**
- * @brief instructionTaken
- * @param instruction
- * @param traitement
- */
-void instructionTaken(std::map<std::string, std::size_t>& instruction, std::map<std::string, std::size_t>& traitement);
-/**
  * @brief specialInstruction
  * @param key
  * @param traitement
