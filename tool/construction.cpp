@@ -277,25 +277,28 @@ transformationASM(std::vector<std::string>                                      
       {"CPC", 2}, {"LPM", 5},    {"MOV", 2},   {"MOVW", 2}, {"LDD", 4},  {"ANDI", 2}, {"SBCI", 2},
       {"STD", 4}, {"RCALL", 34}, {"CALL", 34}, {"SBSR", 1}, {"SBIW", 4}, {"DEC", 2},  {"ST", 5},
       {"LD", 5},  {"RET", 4},    {"SUB", 3},   {"AND", 3}};
-  std::map<std::string, std::size_t> const        traitement{{"ADD", 0}, {"EOR", 1}, {"SUB", 2}, {"AND", 3}};
-  std::map<std::string, std::vector<std::size_t>> RegY;
-  std::map<std::string, std::vector<std::size_t>> RegX;
-  std::map<std::string, std::vector<std::size_t>> RegZ;
-  std::size_t                                     cursorRegX   = 0;
-  std::size_t                                     cursorRegY   = 0;
-  std::size_t                                     cursorRegZ   = 0;
-  std::size_t                                     cursorLDRegX = 0;
-  std::size_t                                     cursorLDRegY = 0;
-  std::size_t                                     cursorLDRegZ = 0;
-  std::vector<std::size_t>                        stockR30;
-  std::vector<std::size_t>                        stockR28;
-  std::vector<std::size_t>                        stockR26;
-  std::vector<std::size_t>                        stockLPMR30;
-  std::vector<std::size_t>                        stockLPMR28;
-  std::vector<std::size_t>                        stockLPMR26;
-  std::string                                     nameRegX;
-  std::string                                     nameRegY;
-  std::string                                     nameRegZ;
+  std::map<std::string, std::size_t> const traitement{{"ADD", 0}, {"EOR", 1}, {"SUB", 2}, {"AND", 3}};
+
+  constexpr std::size_t             REGISTER_X = 0;
+  constexpr std::size_t             REGISTER_Y = 1;
+  constexpr std::size_t             REGISTER_Z = 2;
+  std::map<char, std::size_t> const register_abreviation{
+      {'X', REGISTER_X},
+      {'Y', REGISTER_Y},
+      {'Z', REGISTER_Z},
+  };
+
+  std::array<std::map<std::string, std::vector<std::size_t>>, 3> registers;
+  std::array<std::size_t, 3>                                     registers_cursor{0, 0, 0};
+  std::array<std::size_t, 3>                                     registers_LD_cursor{0, 0, 0};
+  std::array<std::string, 3>                                     registers_name;
+
+  std::vector<std::size_t> stockR30;
+  std::vector<std::size_t> stockR28;
+  std::vector<std::size_t> stockR26;
+  std::vector<std::size_t> stockLPMR30;
+  std::vector<std::size_t> stockLPMR28;
+  std::vector<std::size_t> stockLPMR26;
 
   std::size_t nbLabel;
   if (graph) {
@@ -378,35 +381,19 @@ transformationASM(std::vector<std::string>                                      
           //}
         }
         // a définir si utile
-        if (std::string::npos != nomVar.find('Z')) {
-          //  valueZ=true;
-          if (ValeurKey == 1) {
-            nomVar = ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '));
-            if (nomVar[nomVar.size() - 1] == ' ') {
-              nomVar = nomVar.substr(0, nomVar.size() - 1);
+        std::map<char, std::string> const mapping{{'X', "R17"}, {'Y', "R29"}, {'Z', "R31"}};
+
+        for (auto const& mapping_element : mapping) {
+          if (nomVar.find(mapping_element.first) != std::string::npos) {
+            if (ValeurKey == 1) {
+              nomVar = ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '));
+              if (nomVar[nomVar.size() - 1] == ' ') {
+                nomVar = nomVar.substr(0, nomVar.size() - 1);
+              }
+            } else {
+              nomVar = mapping_element.second;
             }
-          } else {
-            nomVar = "R31";
-          }
-        } else if (std::string::npos != nomVar.find('Y')) {
-          //  valueY=true;
-          if (ValeurKey == 1) {
-            nomVar = ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '));
-            if (nomVar[nomVar.size() - 1] == ' ') {
-              nomVar = nomVar.substr(0, nomVar.size() - 1);
-            }
-          } else {
-            nomVar = "R29";
-          }
-        } else if (std::string::npos != nomVar.find('X')) {
-          //    valueX=true;
-          if (ValeurKey == 1) {
-            nomVar = ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '));
-            if (nomVar[nomVar.size() - 1] == ' ') {
-              nomVar = nomVar.substr(0, nomVar.size() - 1);
-            }
-          } else {
-            nomVar = "R27";
+            break;
           }
         }
 
@@ -437,41 +424,21 @@ transformationASM(std::vector<std::string>                                      
             }
             if (key == "ST" || key == "STD") {
               std::string verif = ligneEnCours.substr(0, ligneEnCours.find(','));
-              if (verif.find('Y') != std::string::npos) {
-                if (!nameRegY.empty()) {
-                  if (key == "STD") {
-                    std::size_t index = ligneEnCours.find('+');
-                    RegY[nameRegY][cursorLDRegY +
-                                   std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, BASE_10)] =
-                        id;
-                  } else {
-                    RegY[nameRegY].push_back(id);
-                    cursorRegY++;
+
+              for (auto const& [abreviation, register_array_id] : register_abreviation) {
+                if (verif.find(abreviation) != std::string::npos) {
+                  if (!registers_name[register_array_id].empty()) {
+                    if (key == "STD") {
+                      std::size_t index = ligneEnCours.find('+');
+                      registers[register_array_id][registers_name[register_array_id]]
+                               [registers_LD_cursor[register_array_id] +
+                                std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, BASE_10)] = id;
+                    } else {
+                      registers[register_array_id][registers_name[register_array_id]].push_back(id);
+                      registers_cursor[register_array_id]++;
+                    }
                   }
-                }
-              } else if (verif.find('X') != std::string::npos) {
-                if (!nameRegX.empty()) {
-                  if (key == "STD") {
-                    std::size_t index = ligneEnCours.find('+');
-                    RegX[nameRegX][cursorLDRegX +
-                                   std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, BASE_10)] =
-                        id;
-                  } else {
-                    RegX[nameRegX].push_back(id);
-                    cursorRegX++;
-                  }
-                }
-              } else if (verif.find('Z') != std::string::npos) {
-                if (!nameRegZ.empty()) {
-                  if (key == "STD") {
-                    std::size_t index = ligneEnCours.find('+');
-                    RegZ[nameRegZ][cursorLDRegZ +
-                                   std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, BASE_10)] =
-                        id;
-                  } else {
-                    RegZ[nameRegZ].push_back(id);
-                    cursorRegZ++;
-                  }
+                  break;
                 }
               }
             }
@@ -481,59 +448,36 @@ transformationASM(std::vector<std::string>                                      
           std::size_t id = 0;
           if (key == "LD" || key == "LDD") {
             std::string verif = ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '));
-            if (verif.find('Y') != std::string::npos) {
-              if (!nameRegY.empty()) {
-                if (key == "LDD") {
-                  std::size_t index = ligneEnCours.find('+');
-                  std::size_t tmpid =
-                      RegY[nameRegY][cursorLDRegY +
-                                     std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, BASE_10)];
-                  id = tmpid;
-                } else {
-                  id = RegY[nameRegY][cursorLDRegY];
-                  if (verif.find('+') != std::string::npos) {
-                    cursorLDRegY++;
-                  } else if (verif.find('-') != std::string::npos) {
-                    cursorLDRegY--;
+
+            auto register_found = false;
+            for (auto const& [abreviation, register_array_id] : register_abreviation) {
+              if (verif.find(abreviation) != std::string::npos) {
+                if (!registers_name[register_array_id].empty()) {
+                  if (key == "LDD") {
+                    std::size_t const index = ligneEnCours.find('+');
+                    std::size_t const tmpid =
+                        registers[register_array_id][registers_name[register_array_id]]
+                                 [registers_LD_cursor[register_array_id] +
+                                  std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, BASE_10)];
+                    id = tmpid;
+                  } else {
+                    id = registers[register_array_id][registers_name[register_array_id]]
+                                  [registers_LD_cursor[register_array_id]];
+                    if (verif.find('+') != std::string::npos) {
+                      registers_LD_cursor[register_array_id]++;
+                    } else if (verif.find('-') != std::string::npos) {
+                      registers_LD_cursor[register_array_id]--;
+                    }
                   }
                 }
+                register_found = true;
+                break;
               }
-            } else if (verif.find('X') != std::string::npos) {
-              if (!nameRegX.empty()) {
-                if (key == "LDD") {
-                  std::size_t index = ligneEnCours.find('+');
-                  std::size_t tmpid =
-                      RegX[nameRegX][cursorLDRegX +
-                                     std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, BASE_10)];
-                  id = tmpid;
-                } else {
-                  id = RegY[nameRegX][cursorLDRegX];
-                  if (verif.find('+') != std::string::npos) {
-                    cursorLDRegX++;
-                  } else if (verif.find('-') != std::string::npos) {
-                    cursorLDRegX--;
-                  }
-                }
-              }
-            } else if (verif.find('Z') != std::string::npos) {
-              if (!nameRegZ.empty()) {
-                if (key == "LDD") {
-                  std::size_t index = ligneEnCours.find('+');
-                  id =
-                      RegZ[nameRegZ][cursorLDRegZ +
-                                     std::strtoul(ligneEnCours.substr(index + 1, index + 2).c_str(), nullptr, BASE_10)];
-                } else {
-                  id = RegZ[nameRegZ][cursorLDRegZ];
-                  if (verif.find('+') != std::string::npos) {
-                    cursorLDRegZ++;
-                  } else if (verif.find('-') != std::string::npos) {
-                    cursorLDRegZ--;
-                  }
-                }
-              }
-            } else {
+            }
+            if (!register_found) {
               std::cout << "erreur sur les registre Y X Z " << std::endl;
             }
+
             std::map<std::string, std::size_t> vue;
             if (!cycle) {
               me = findCycle(varFonc, link, nomFonction, id, vue);
@@ -553,49 +497,50 @@ transformationASM(std::vector<std::string>                                      
             var.push_back(nbLabel);
             varIndex[nomVar] = var.size() - 1;
             lienF.push_back(var.size() - 1);
-            std::vector<std::string> vec;
-            vec.push_back(nomFonction);
-            varFonc[var.size() - 1] = vec;
+            varFonc[var.size() - 1] = std::vector<std::string>{nomFonction};
             if (key == "SBIW") {
               std::size_t diff = std::strtoul(
                   ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' ')).c_str(), nullptr, BASE_10);
 
               if (nomVar == "R28") {
-                cursorRegY -= diff;
+                registers_cursor[REGISTER_Y] -= diff;
               } else if (nomVar == "R30") {
-                cursorRegZ = -diff;
+                registers_cursor[REGISTER_Z] = -diff;
               }
             } else if (key == "ADIW") {
               std::size_t add = std::strtoul(
                   ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' ')).c_str(), nullptr, BASE_10);
 
               if (nomVar == "R28") {
-                cursorRegY += add;
+                registers_cursor[REGISTER_Y] += add;
 
               } else if (nomVar == "R30") {
-                cursorRegZ += add;
+                registers_cursor[REGISTER_Z] += add;
               }
             }
             if (key == "LDI") {
               if (nomVar == "R26") {
-                if (RegX.find(ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '))) == RegX.end()) {
+                if (registers[REGISTER_X].find(ligneEnCours.substr(
+                        ligneEnCours.find(',') + 2, ligneEnCours.find(' '))) == registers[REGISTER_X].end()) {
 
-                  RegX[nameRegX] = std::vector<std::size_t>(0);
+                  registers[REGISTER_X][registers_name[REGISTER_X]] = std::vector<std::size_t>(0);
                 }
-                nameRegX   = ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '));
-                cursorRegX = 0;
+                registers_name[REGISTER_X]   = ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '));
+                registers_cursor[REGISTER_X] = 0;
               } else if (nomVar == "R28") {
-                if (RegY.find(ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '))) == RegY.end()) {
-                  nameRegY       = ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '));
-                  cursorRegY     = 0;
-                  RegY[nameRegY] = std::vector<std::size_t>(0);
+                if (registers[REGISTER_Y].find(ligneEnCours.substr(
+                        ligneEnCours.find(',') + 2, ligneEnCours.find(' '))) == registers[REGISTER_Y].end()) {
+                  registers_name[REGISTER_Y] = ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '));
+                  registers_cursor[REGISTER_Y]                      = 0;
+                  registers[REGISTER_Y][registers_name[REGISTER_Y]] = std::vector<std::size_t>(0);
                 }
               } else if (nomVar == "R30") {
-                if (RegZ.find(ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '))) == RegZ.end()) {
-                  RegZ[nameRegZ] = std::vector<std::size_t>(0);
+                if (registers[REGISTER_Z].find(ligneEnCours.substr(
+                        ligneEnCours.find(',') + 2, ligneEnCours.find(' '))) == registers[REGISTER_Z].end()) {
+                  registers[REGISTER_Z][registers_name[REGISTER_Z]] = std::vector<std::size_t>(0);
                 }
-                nameRegZ   = ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '));
-                cursorRegZ = 0;
+                registers_name[REGISTER_Z]   = ligneEnCours.substr(ligneEnCours.find(',') + 2, ligneEnCours.find(' '));
+                registers_cursor[REGISTER_Z] = 0;
               }
             }
           }
