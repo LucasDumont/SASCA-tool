@@ -8,8 +8,8 @@
 
 int main()
 {
-  std::ifstream            fichier("../sample/example_exe", std::ios::in);
-  std::ifstream            fichierH("../sample/example", std::ios::in);
+  std::ifstream            fichier("example_exe", std::ios::in);
+  std::ifstream            fichierH("example", std::ios::in);
   std::vector<std::string> instruction;
   std::string              hamming;
 
@@ -74,7 +74,7 @@ int main()
   stopTime    = clock();
   elapsedTime = static_cast<double>(stopTime - startTime) / CLOCKS_PER_MILISEC;
   std::cout << "Time :" << elapsedTime << std::endl;
-  std::ofstream fichierOut("../output", std::ios::out);
+  std::ofstream fichierOut("output", std::ios::out);
 
   if (fichierOut) {
     for (const auto& i : output) {

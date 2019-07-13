@@ -193,7 +193,7 @@ void standartInstruction(std::string const&                                     
                          std::vector<std::size_t>                               stockLPMR30,
                          std::vector<std::size_t>                               stockLPMR28,
                          std::vector<std::size_t>                               stockLPMR26,
-                         std::map<std::string, std::size_t>                     varIndex,
+                         std::map<std::string, std::size_t> const&              varIndex,
                          std::map<std::size_t, std::vector<std::string>>&       varFonc,
                          std::size_t                                            i,
                          bool                                                   LPMReg,
