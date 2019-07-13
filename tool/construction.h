@@ -98,7 +98,7 @@ transformationASM(std::vector<std::string>                                      
  * @return
  */
 bool findCycle(std::map<std::size_t, std::vector<std::string>> const& varFonc,
-               std::map<std::string, std::vector<std::size_t>> const& link,
+               std::map<std::string, std::vector<std::size_t>>        link,
                std::string const&                                     cible,
                std::size_t                                            id,
                std::map<std::string, std::size_t>&                    vue);

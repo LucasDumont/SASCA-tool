@@ -708,7 +708,7 @@ transformationASM(std::vector<std::string>                                      
 }
 
 bool findCycle(std::map<std::size_t, std::vector<std::string>> const& varFonc,
-               std::map<std::string, std::vector<std::size_t>> const& link,
+               std::map<std::string, std::vector<std::size_t>>        link,
                std::string const&                                     cible,
                std::size_t                                            id,
                std::map<std::string, std::size_t>&                    vue)
@@ -722,7 +722,7 @@ bool findCycle(std::map<std::size_t, std::vector<std::string>> const& varFonc,
       if (fonctionTmp[i] == cible) {
         parcour = true;
       }
-      auto lien = link.at(fonctionTmp[i]);
+      auto lien = link[fonctionTmp[i]];
 
       for (std::size_t j = 0; j < lien.size() && !parcour; j++) {
         if (lien[j] != id && varFonc.at(lien[j]).size() > 1) {
